@@ -27,12 +27,16 @@ def MENU():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent(""))
 
-    parser.add_argument('process',
-                        help='the process that you will be injecting to')
+    parser.add_argument('param',
+                        help='provide application name (default), application identifier (-a) or process id (-p)')
     parser.add_argument('-o', '--out', type=str, metavar="dir",
                         help='provide full output directory path. (def: \'dump\')')
     parser.add_argument('-U', '--usb', action='store_true',
                         help='device connected over usb')
+    parser.add_argument('-a', '--application', action='store_true',
+                        help='application identifier')
+    parser.add_argument('-p', '--pid', action='store_true',
+                        help='application process id')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose')
     parser.add_argument('-r', '--read-only', action='store_true',
@@ -50,9 +54,11 @@ print(logo)
 arguments = MENU()
 
 # Define Configurations
-APP_NAME = arguments.process
+PARAMETER = arguments.param
 DIRECTORY = ""
 USB = arguments.usb
+ID = arguments.application
+PID = arguments.pid
 DEBUG_LEVEL = logging.INFO
 STRINGS = arguments.strings
 MAX_SIZE = 20971520
@@ -68,15 +74,32 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=DEBUG_LEVEL)
 
 # Start a new Session
 session = None
-try:
-    if USB:
-        session = frida.get_usb_device().attach(APP_NAME)
+if USB:
+    if PID:
+        try:
+            pid = [a for a in frida.get_usb_device().enumerate_processes() if a.pid == int(PARAMETER)][0].pid
+            session = frida.get_usb_device().attach(pid)
+        except Exception as e:
+            print(f"No application is found with the given PID: {PARAMETER}")
+            logging.debug(str(e))
+            sys.exit()
+    elif ID:
+        try:
+            pid = [a for a in frida.get_usb_device().enumerate_applications() if a.identifier == PARAMETER][0].pid
+            session = frida.get_usb_device().attach(pid)
+        except Exception as e:
+            print(f"No application is found with the given identifier: {PARAMETER}")
+            logging.debug(str(e))
+            sys.exit()
     else:
-        session = frida.attach(APP_NAME)
-except Exception as e:
-    print("Can't connect to App. Have you connected the device?")
-    logging.debug(str(e))
-    sys.exit()
+        try:
+            session = frida.get_usb_device().attach(PARAMETER)
+        except Exception as e:
+            print(f"Application name is not found: {PARAMETER}")
+            logging.debug(str(e))
+            sys.exit()
+else:
+    session = frida.attach(PARAMETER)
 
 
 # Selecting Output directory
