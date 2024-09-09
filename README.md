@@ -6,17 +6,19 @@ Usage
 
 How to:
 
-      fridump [-h] [-o dir] [-U] [-v] [-r] [-s] [--max-size bytes] process
+      fridump [-h] [-o dir] [-U] [-p] [-a] [-v] [-r] [-s] [--max-size bytes] parameter
 
 The following are the main flags that can be used with fridump:
 
       positional arguments:
-      process            the process that you will be injecting to
+      param              provide application name (default), application identifier (-a) or process id (-p)
 
       optional arguments:
       -h, --help         show this help message and exit
       -o dir, --out dir  provide full output directory path. (def: 'dump')
       -U, --usb          device connected over usb
+      -a, --application  application identifier
+      -p, --pid          application process id
       -v, --verbose      verbose
       -r, --read-only    dump read-only parts of memory. More data, more errors
       -s, --strings      run strings on all dump files. Saved in output dir.
@@ -32,7 +34,8 @@ For a process that is running on a USB connected device, you can use:
 Examples:
 
       fridump -U Safari   -   Dump the memory of an iOS device associated with the Safari app
-      fridump -U -s com.example.WebApp   -  Dump the memory of an Android device and run strings on all dump files
+      fridump -Ua -s com.example.WebApp   -  Dump the memory of an Android device and run strings on all dump files
+      fridump -Up 1337   -  Dump the memory of a local process with the PID 1337
       fridump -r -o [full_path]  -  Dump the memory of a local application and save it to the specified directory
       
 More examples can be found [here](http://pentestcorner.com/introduction-to-fridump/)
